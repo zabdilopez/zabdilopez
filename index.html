@@ -522,6 +522,19 @@
 </head>
 <body>
 
+  <!-- TREE CORE SCROLL ANIMATION (fixed, left edge) -->
+  <div id="core-anim" aria-hidden="true" style="position:fixed; left:14px; top:0; width:64px; height:100vh; pointer-events:none; z-index:500; mix-blend-mode:difference;">
+    <svg id="core-anim-svg" viewBox="0 0 64 800" width="64" height="100%" preserveAspectRatio="none" style="display:block; overflow:visible;">
+      <g id="core-anim-group" fill="none" stroke="#ffffff" stroke-width="1.2" style="transition: transform 0.35s ease-out;">
+        <line x1="18" y1="0" x2="18" y2="800" opacity="0.25" />
+        <line x1="46" y1="0" x2="46" y2="800" opacity="0.25" />
+        <g id="core-anim-ticks" opacity="0.36"></g>
+        <line id="core-anim-drill" x1="4" y1="0" x2="60" y2="0" stroke-width="2" opacity="0.4" />
+        <circle id="core-anim-pith" cx="32" cy="800" r="5.5" stroke-width="2.2" opacity="0" />
+      </g>
+    </svg>
+  </div>
+
   <!-- HERO -->
   <div class="hero">
     <div class="hero-left">
@@ -656,6 +669,55 @@
       <a class="footer-link" href="http://biodiversidad.gt" target="_blank">biodiversidad.gt</a>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var group = document.getElementById('core-anim-group');
+      var tickGroup = document.getElementById('core-anim-ticks');
+      var drill = document.getElementById('core-anim-drill');
+      var pith = document.getElementById('core-anim-pith');
+      if (!group || !tickGroup || !drill || !pith) return;
+
+      var TOP = 0, BOTTOM = 800;
+      var TICKS = 46, ticks = [];
+      for (var i = 0; i < TICKS; i++) {
+        var f = i / (TICKS - 1);
+        var jitter = 0.012 * Math.sin(i * 2.7 + 1);
+        f = Math.min(1, Math.max(0, f + jitter));
+        var y = TOP + f * (BOTTOM - TOP);
+        var curve = 16 * Math.pow(f, 4);
+        var tick = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tick.setAttribute('d', 'M 18,' + y.toFixed(1) + ' Q 32,' + (y - curve).toFixed(1) + ' 46,' + y.toFixed(1));
+        tick.setAttribute('stroke-width', (i % 5 === 0) ? 1.8 : 1);
+        tickGroup.appendChild(tick);
+        ticks.push({ el: tick, y: y });
+      }
+
+      function onScroll() {
+        var max = document.documentElement.scrollHeight - window.innerHeight;
+        var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+        var drillY = TOP + p * (BOTTOM - TOP);
+        drill.setAttribute('y1', drillY.toFixed(1));
+        drill.setAttribute('y2', drillY.toFixed(1));
+        for (var i = 0; i < ticks.length; i++) {
+          ticks[i].el.setAttribute('opacity', ticks[i].y <= drillY ? 0.85 : 0);
+        }
+        var pithFade = (p - 0.85) / 0.15;
+        pithFade = Math.min(1, Math.max(0, pithFade));
+        pith.setAttribute('opacity', pithFade.toFixed(2));
+      }
+
+      function onMouseMove(e) {
+        var dx = (e.clientX / window.innerWidth) - 0.5;
+        var dy = (e.clientY / window.innerHeight) - 0.5;
+        group.style.transform = 'translate(' + (dx * 8).toFixed(1) + 'px,' + (dy * 6).toFixed(1) + 'px)';
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('mousemove', onMouseMove);
+      onScroll();
+    })();
+  </script>
 
 </body>
 </html>
